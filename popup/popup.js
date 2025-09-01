@@ -2,6 +2,7 @@
 document.addEventListener('DOMContentLoaded', async function() {
   const tokenList = document.getElementById('tokenList');
   const refreshBtn = document.getElementById('refreshBtn');
+  const settingsBtn = document.getElementById('settingsBtn');
   const addTokenBtn = document.getElementById('addTokenBtn');
   
   // Load tokens from storage
@@ -11,12 +12,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     if (tokens.length === 0) {
       tokenList.innerHTML = `
-        <div class="empty-state">
+        <div class="popup-empty-state">
           <p>No OTP tokens found</p>
           <button id="addTokenBtn">Add Token</button>
         </div>
       `;
-      document.getElementById('addTokenBtn').addEventListener('click', () => {
+      document.getElementById('addTokenBtn')?.addEventListener('click', () => {
         chrome.runtime.openOptionsPage();
       });
       return;
@@ -47,21 +48,21 @@ document.addEventListener('DOMContentLoaded', async function() {
       </div>
       <div class="token-content">
         <span class="otp-value">${otp}</span>
-        <button class="copy-btn" data-otp="${otp}">Copy</button>
+        <button class="copy-btn icon-btn" data-otp="${otp}">📋</button>
       </div>
       <div class="token-footer">
         <span class="issuer">${token.issuer}</span>
         <div class="progress-container">
           <svg class="progress-ring" width="30" height="30">
             <circle class="progress-ring-circle" 
-                    stroke="#e0e0e0" 
+                    stroke="#e9ecef" 
                     stroke-width="3" 
                     fill="transparent" 
                     r="12" 
                     cx="15" 
                     cy="15"/>
             <circle class="progress-ring-circle progress" 
-                    stroke="#4f46e5" 
+                    stroke="#4361ee" 
                     stroke-width="3" 
                     fill="transparent" 
                     r="12" 
@@ -79,7 +80,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     copyBtn.addEventListener('click', () => {
       navigator.clipboard.writeText(otp).then(() => {
         const originalText = copyBtn.textContent;
-        copyBtn.textContent = 'Copied!';
+        copyBtn.textContent = '✓';
         setTimeout(() => {
           copyBtn.textContent = originalText;
         }, 2000);
@@ -102,10 +103,10 @@ document.addEventListener('DOMContentLoaded', async function() {
       
       // Make it red if less than 10 seconds remaining
       if (progress <= 10) {
-        circle.style.stroke = '#ef4444';
+        circle.style.stroke = '#f72585';
         circle.classList.add('warning');
       } else {
-        circle.style.stroke = '#4f46e5';
+        circle.style.stroke = '#4361ee';
         circle.classList.remove('warning');
       }
     });
@@ -113,6 +114,11 @@ document.addEventListener('DOMContentLoaded', async function() {
   
   // Refresh tokens
   refreshBtn.addEventListener('click', loadTokens);
+  
+  // Open settings page
+  settingsBtn.addEventListener('click', () => {
+    chrome.runtime.openOptionsPage();
+  });
   
   // Add token button
   if (addTokenBtn) {

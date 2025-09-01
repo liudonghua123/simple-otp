@@ -5,6 +5,10 @@ document.addEventListener('DOMContentLoaded', async function() {
   const exportBtn = document.getElementById('exportBtn');
   const importBtn = document.getElementById('importBtn');
   const importFile = document.getElementById('importFile');
+  const addTokenBtn = document.getElementById('addTokenBtn');
+  const addTokenModal = document.getElementById('addTokenModal');
+  const modalClose = document.querySelector('.modal-close');
+  const modalCancel = document.querySelector('.modal-cancel');
   
   // Load and display tokens
   async function loadTokens() {
@@ -12,7 +16,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     const tokens = result.otpTokens || [];
     
     if (tokens.length === 0) {
-      tokenList.innerHTML = '<p class="empty-message">No tokens saved yet.</p>';
+      tokenList.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🔒</div>
+          <h3>No Tokens Found</h3>
+          <p>Add your first token using the "Add New Token" button above</p>
+        </div>
+      `;
       return;
     }
     
@@ -91,6 +101,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('label').value = token.label;
         document.getElementById('secret').value = token.secret;
         
+        // Show modal
+        addTokenModal.style.display = 'block';
+        
         // Change form to update mode
         tokenForm.dataset.editIndex = index;
         tokenForm.querySelector('button[type="submit"]').textContent = 'Update Token';
@@ -133,6 +146,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         const result = await chrome.storage.local.get(['otpTokens']);
         let existingTokens = result.otpTokens || [];
         
+        // Count new and updated tokens
+        let newCount = 0;
+        let updatedCount = 0;
+        
         // Merge tokens: replace existing ones with same issuer/label, add new ones
         tokens.forEach(newToken => {
           // Validate token structure
@@ -149,9 +166,11 @@ document.addEventListener('DOMContentLoaded', async function() {
           if (existingIndex >= 0) {
             // Replace existing token
             existingTokens[existingIndex] = newToken;
+            updatedCount++;
           } else {
             // Add new token
             existingTokens.push(newToken);
+            newCount++;
           }
         });
         
@@ -162,7 +181,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         await loadTokens();
         
         // Show success message
-        alert(`Successfully imported ${tokens.length} tokens!`);
+        alert(`Successfully imported tokens!
+${newCount} new tokens added
+${updatedCount} tokens updated`);
       } catch (error) {
         console.error('Error importing tokens:', error);
         alert('Error importing tokens: ' + error.message);
@@ -170,6 +191,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
     
     reader.readAsText(file);
+  }
+  
+  // Show modal
+  function showModal() {
+    addTokenModal.style.display = 'block';
+    tokenForm.reset();
+    delete tokenForm.dataset.editIndex;
+    tokenForm.querySelector('button[type="submit"]').textContent = 'Add Token';
+  }
+  
+  // Hide modal
+  function hideModal() {
+    addTokenModal.style.display = 'none';
   }
   
   // Handle form submission
@@ -185,15 +219,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (editIndex !== undefined) {
       // Update existing token
       await saveToken(issuer, label, secret, parseInt(editIndex));
-      delete tokenForm.dataset.editIndex;
-      tokenForm.querySelector('button[type="submit"]').textContent = 'Add Token';
     } else {
       // Add new token
       await saveToken(issuer, label, secret);
     }
     
-    // Reset form
-    tokenForm.reset();
+    // Hide modal
+    hideModal();
     
     // Refresh token list
     await loadTokens();
@@ -205,6 +237,20 @@ document.addEventListener('DOMContentLoaded', async function() {
   // Import button event listener
   importBtn.addEventListener('click', () => {
     importFile.click();
+  });
+  
+  // Add token button event listener
+  addTokenBtn.addEventListener('click', showModal);
+  
+  // Modal close event listeners
+  modalClose.addEventListener('click', hideModal);
+  modalCancel.addEventListener('click', hideModal);
+  
+  // Close modal when clicking outside of it
+  window.addEventListener('click', (e) => {
+    if (e.target === addTokenModal) {
+      hideModal();
+    }
   });
   
   // Import file event listener
