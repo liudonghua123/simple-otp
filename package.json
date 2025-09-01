@@ -1,0 +1,16 @@
+{
+  "name": "simple-otp-extension",
+  "version": "1.0.0",
+  "description": "A browser extension for managing OTP tokens",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js --watch",
+    "serve": "http-server dist -p 8080",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "fs-extra": "^10.0.0",
+    "chokidar": "^3.5.2",
+    "http-server": "^14.1.1"
+  }
+}

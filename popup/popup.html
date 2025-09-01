@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple OTP</title>
+  <link rel="stylesheet" href="../shared/styles.css">
+</head>
+<body>
+  <div class="header">
+    <h1>OTP Tokens</h1>
+    <button id="refreshBtn" class="refresh-btn">↻</button>
+  </div>
+  <div id="tokenList" class="token-list">
+    <!-- Tokens will be populated here -->
+    <div class="empty-state">
+      <p>No OTP tokens found</p>
+      <button id="addTokenBtn">Add Token</button>
+    </div>
+  </div>
+  <script src="../shared/otp-utils.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
