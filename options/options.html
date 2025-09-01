@@ -9,51 +9,60 @@
 <body>
   <div class="options-container">
     <header class="options-header">
-      <h1>OTP Token Manager</h1>
-      <p class="subtitle">Manage your one-time password tokens securely</p>
+      <h1 id="optionsTitle">OTP Token Manager</h1>
+      <p class="subtitle" id="optionsSubtitle">Manage your one-time password tokens securely</p>
     </header>
     
     <div class="actions-bar">
       <button id="addTokenBtn" class="btn-primary">
         <span class="btn-icon">+</span>
-        Add New Token
+        <span id="addNewToken">Add New Token</span>
       </button>
+      <!-- Language selector -->
+      <div class="language-selector-container">
+        <label for="languageSelector" id="languageLabel">Language:</label>
+        <select id="languageSelector" class="form-control">
+          <option value="auto" id="autoOption">Auto</option>
+          <option value="en-US" id="englishOption">English</option>
+          <option value="zh-CN" id="chineseOption">中文</option>
+        </select>
+      </div>
     </div>
     
     <div class="card">
       <div class="card-header">
-        <h2>Import/Export</h2>
-        <p class="card-subtitle">Backup or transfer your tokens</p>
+        <h2 id="importExport">Import/Export</h2>
+        <p class="card-subtitle" id="importExportSubtitle">Backup or transfer your tokens</p>
       </div>
       
       <div class="import-export-section">
         <div class="button-group">
           <button id="exportBtn" class="btn-secondary">
             <span class="btn-icon">↓</span>
-            Export Tokens
+            <span id="exportTokens">Export Tokens</span>
           </button>
           <button id="importBtn" class="btn-secondary">
             <span class="btn-icon">↑</span>
-            Import Tokens
+            <span id="importTokens">Import Tokens</span>
           </button>
           <input type="file" id="importFile" accept=".json" style="display: none;">
         </div>
-        <p class="helper-text">Export your tokens as a JSON file for backup. Import tokens from a JSON file to restore or transfer.</p>
+        <p class="helper-text" id="importHelperText">Export your tokens as a JSON file for backup. Import tokens from a JSON file to restore or transfer.</p>
       </div>
     </div>
     
     <div class="card">
       <div class="card-header">
-        <h2>Saved Tokens</h2>
-        <p class="card-subtitle">Manage your existing OTP tokens</p>
+        <h2 id="savedTokens">Saved Tokens</h2>
+        <p class="card-subtitle" id="savedTokensSubtitle">Manage your existing OTP tokens</p>
       </div>
       
       <div id="tokenList" class="token-list">
         <!-- Tokens will be populated here -->
         <div class="empty-state">
           <div class="empty-icon">🔒</div>
-          <h3>No Tokens Found</h3>
-          <p>Add your first token using the "Add New Token" button above</p>
+          <h3 id="noTokensFoundOptions">No Tokens Found</h3>
+          <p id="noTokensFoundMessage">Add your first token using the "Add New Token" button above</p>
         </div>
       </div>
     </div>
@@ -63,39 +72,55 @@
   <div id="addTokenModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Add New Token</h2>
+        <h2 id="addTokenModalTitle">Add New Token</h2>
         <span class="modal-close">&times;</span>
       </div>
       <div class="modal-body">
         <form id="tokenForm" class="token-form">
           <div class="form-group">
-            <label for="issuer">Issuer</label>
+            <label for="issuer" id="issuerLabel">Issuer</label>
             <input type="text" id="issuer" required placeholder="e.g., Google, GitHub">
-            <span class="helper-text">The service providing the OTP (e.g., Google, GitHub)</span>
+            <span class="helper-text" id="issuerHelperText">The service providing the OTP (e.g., Google, GitHub)</span>
           </div>
           
           <div class="form-group">
-            <label for="label">Label</label>
+            <label for="label" id="labelLabel">Label</label>
             <input type="text" id="label" required placeholder="e.g., john@example.com">
-            <span class="helper-text">Your account identifier (e.g., email, username)</span>
+            <span class="helper-text" id="labelHelperText">Your account identifier (e.g., email, username)</span>
           </div>
           
           <div class="form-group">
-            <label for="secret">Secret Key</label>
+            <label for="secret" id="secretLabel">Secret Key</label>
             <input type="text" id="secret" required placeholder="e.g., JBSWY3DPEHPK3PXP">
-            <span class="helper-text">The secret key provided by the service (Base32 format)</span>
+            <span class="helper-text" id="secretHelperText">The secret key provided by the service (Base32 format)</span>
+          </div>
+          
+          <!-- QR Code Scanner Section -->
+          <div class="form-group">
+            <label id="scanQRCodeLabel">Scan QR Code</label>
+            <div class="qr-upload-container">
+              <input type="file" id="qrImageInput" accept="image/*" style="display: none;">
+              <button type="button" id="chooseImageButton" class="btn-secondary">
+                <span id="chooseImageText">Choose Image</span>
+              </button>
+              <span id="qrResultMessage" class="helper-text" style="margin-left: 10px;"></span>
+            </div>
+            <span class="helper-text" id="scanQRCodeHelper">Upload a QR code image to extract token information</span>
           </div>
           
           <div class="form-actions">
-            <button type="submit" class="btn-primary">Add Token</button>
-            <button type="button" class="btn-secondary modal-cancel">Cancel</button>
+            <button type="submit" class="btn-primary" id="addTokenButton">Add Token</button>
+            <button type="button" class="btn-secondary modal-cancel" id="cancelButton">Cancel</button>
           </div>
         </form>
       </div>
     </div>
   </div>
   
+  <script src="../shared/jsQR.js"></script>
   <script src="../shared/otp-utils.js"></script>
+  <script src="../shared/i18n.js"></script>
+  <script src="../shared/qr-utils.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

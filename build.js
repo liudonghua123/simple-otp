@@ -31,6 +31,16 @@ async function build() {
     }
   }
   
+  // Copy jsQR library from node_modules
+  const jsqrSrc = path.join(sourceDir, 'node_modules', 'jsqr', 'dist', 'jsQR.js');
+  const jsqrDest = path.join(buildDir, 'shared', 'jsQR.js');
+  try {
+    await fs.copy(jsqrSrc, jsqrDest);
+    console.log('Copied jsQR library to shared folder');
+  } catch (error) {
+    console.error('Failed to copy jsQR library:', error);
+  }
+  
   console.log('Build complete!');
 }
 

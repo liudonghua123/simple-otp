@@ -8,20 +8,21 @@
 </head>
 <body class="popup-container">
   <div class="header">
-    <h1>OTP Tokens</h1>
+    <h1 id="popupTitle">OTP Tokens</h1>
     <div class="header-actions">
-      <button id="refreshBtn" class="refresh-btn">↻</button>
-      <button id="settingsBtn" class="settings-btn">⚙️</button>
+      <button id="refreshBtn" class="refresh-btn" title="Refresh">↻</button>
+      <button id="settingsBtn" class="settings-btn" title="Settings">⚙️</button>
     </div>
   </div>
   <div id="tokenList" class="popup-token-list">
     <!-- Tokens will be populated here -->
     <div class="popup-empty-state">
-      <p>No OTP tokens found</p>
+      <p id="noTokensFound">No OTP tokens found</p>
       <button id="addTokenBtn">Add Token</button>
     </div>
   </div>
   <script src="../shared/otp-utils.js"></script>
+  <script src="../shared/i18n.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

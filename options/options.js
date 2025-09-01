@@ -1,5 +1,9 @@
 // options.js
 document.addEventListener('DOMContentLoaded', async function() {
+  // Initialize i18n
+  await initI18n();
+  
+  // Get DOM elements
   const tokenForm = document.getElementById('tokenForm');
   const tokenList = document.getElementById('tokenList');
   const exportBtn = document.getElementById('exportBtn');
@@ -9,6 +13,17 @@ document.addEventListener('DOMContentLoaded', async function() {
   const addTokenModal = document.getElementById('addTokenModal');
   const modalClose = document.querySelector('.modal-close');
   const modalCancel = document.querySelector('.modal-cancel');
+  const languageSelector = document.getElementById('languageSelector');
+  const chooseImageButton = document.getElementById('chooseImageButton');
+  const qrImageInput = document.getElementById('qrImageInput');
+  const qrResultMessage = document.getElementById('qrResultMessage');
+  
+  // Set initial language selection
+  const currentLang = getCurrentLanguage();
+  languageSelector.value = currentLang === 'en-US' || currentLang === 'zh-CN' ? currentLang : 'auto';
+  
+  // Update UI texts after elements are defined
+  updateUITexts();
   
   // Load and display tokens
   async function loadTokens() {
@@ -19,8 +34,8 @@ document.addEventListener('DOMContentLoaded', async function() {
       tokenList.innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">🔒</div>
-          <h3>No Tokens Found</h3>
-          <p>Add your first token using the "Add New Token" button above</p>
+          <h3 id="noTokensFoundOptions">${t('noTokensFoundOptions')}</h3>
+          <p id="noTokensFoundMessage">${t('noTokensFoundMessage')}</p>
         </div>
       `;
       return;
@@ -37,8 +52,8 @@ document.addEventListener('DOMContentLoaded', async function() {
           <span>${token.label}</span>
         </div>
         <div class="token-actions">
-          <button class="btn-secondary edit-btn" data-index="${index}">Edit</button>
-          <button class="btn-danger delete-btn" data-index="${index}">Delete</button>
+          <button class="btn-secondary edit-btn" data-index="${index}">${t('edit')}</button>
+          <button class="btn-danger delete-btn" data-index="${index}">${t('delete')}</button>
         </div>
       `;
       tokenList.appendChild(tokenElement);
@@ -106,7 +121,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // Change form to update mode
         tokenForm.dataset.editIndex = index;
-        tokenForm.querySelector('button[type="submit"]').textContent = 'Update Token';
+        document.getElementById('addTokenButton').textContent = t('updateTokenButton');
+        document.getElementById('addTokenModalTitle').textContent = t('updateTokenButton');
+        updateUITexts(); // Update texts to reflect edit mode
       }
     });
   }
@@ -139,7 +156,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         // Validate tokens structure
         if (!Array.isArray(tokens)) {
-          throw new Error('Invalid file format: expected an array of tokens');
+          throw new Error(t('invalidFileFormat'));
         }
         
         // Get existing tokens
@@ -198,7 +215,12 @@ ${updatedCount} tokens updated`);
     addTokenModal.style.display = 'block';
     tokenForm.reset();
     delete tokenForm.dataset.editIndex;
-    tokenForm.querySelector('button[type="submit"]').textContent = 'Add Token';
+    document.getElementById('addTokenButton').textContent = t('addTokenButton');
+    document.getElementById('addTokenModalTitle').textContent = t('addNewToken');
+    // Clear QR result message
+    qrResultMessage.textContent = '';
+    qrResultMessage.className = 'helper-text';
+    updateUITexts(); // Update texts to reflect add mode
   }
   
   // Hide modal
@@ -255,6 +277,159 @@ ${updatedCount} tokens updated`);
   
   // Import file event listener
   importFile.addEventListener('change', importTokens);
+  
+  // Language selector event listener
+  languageSelector.addEventListener('change', async function() {
+    const selectedLang = this.value;
+    if (selectedLang === 'auto') {
+      // Reset to auto-detection
+      localStorage.removeItem('otp-language');
+      await initI18n();
+    } else {
+      await setLanguage(selectedLang);
+    }
+    updateUITexts();
+    await loadTokens();
+  });
+  
+  // QR Code image upload event listener
+  chooseImageButton.addEventListener('click', () => {
+    qrImageInput.click();
+  });
+  
+  // Handle QR image input change
+  qrImageInput.addEventListener('change', async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    try {
+      // Create image element from file
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      
+      img.onload = async function() {
+        try {
+          // Create canvas to process image
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Set canvas dimensions
+          canvas.width = img.width;
+          canvas.height = img.height;
+          
+          // Draw image on canvas
+          ctx.drawImage(img, 0, 0);
+          
+          // Get image data from canvas
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          
+          // Use jsQR to decode
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          
+          if (code) {
+            // Parse OTP information from QR content
+            const otpInfo = parseOTPFromQRContent(code.data);
+            
+            if (otpInfo) {
+              // Fill form fields with parsed data
+              document.getElementById('issuer').value = otpInfo.issuer;
+              document.getElementById('label').value = otpInfo.label;
+              document.getElementById('secret').value = otpInfo.secret;
+              
+              // Show success message
+              qrResultMessage.textContent = t('imageParsingSuccess');
+              qrResultMessage.style.color = 'green';
+            } else {
+              // Show error message
+              qrResultMessage.textContent = t('imageParsingError') + ': Invalid OTP format';
+              qrResultMessage.style.color = 'red';
+            }
+          } else {
+            // Show error message
+            qrResultMessage.textContent = t('imageParsingError') + ': No QR code found';
+            qrResultMessage.style.color = 'red';
+          }
+          
+          // Clean up object URL
+          URL.revokeObjectURL(objectUrl);
+        } catch (error) {
+          console.error('Error processing QR code:', error);
+          qrResultMessage.textContent = t('imageParsingError') + ': ' + error.message;
+          qrResultMessage.style.color = 'red';
+          URL.revokeObjectURL(objectUrl);
+        }
+      };
+      
+      img.onerror = function() {
+        qrResultMessage.textContent = t('imageParsingError') + ': Failed to load image';
+        qrResultMessage.style.color = 'red';
+        URL.revokeObjectURL(objectUrl);
+      };
+      
+      img.src = objectUrl;
+    } catch (error) {
+      console.error('Error reading QR code image:', error);
+      qrResultMessage.textContent = t('imageParsingError') + ': ' + error.message;
+      qrResultMessage.style.color = 'red';
+    }
+  });
+  
+  // Update UI texts based on current language
+  function updateUITexts() {
+    // Update page titles and texts
+    document.getElementById('optionsTitle').textContent = t('optionsTitle');
+    document.getElementById('optionsSubtitle').textContent = t('optionsSubtitle');
+    document.getElementById('addNewToken').textContent = t('addNewToken');
+    document.getElementById('importExport').textContent = t('importExport');
+    document.getElementById('importExportSubtitle').textContent = t('importExportSubtitle');
+    document.getElementById('exportTokens').textContent = t('exportTokens');
+    document.getElementById('importTokens').textContent = t('importTokens');
+    document.getElementById('importHelperText').textContent = t('importHelperText');
+    document.getElementById('savedTokens').textContent = t('savedTokens');
+    document.getElementById('savedTokensSubtitle').textContent = t('savedTokensSubtitle');
+    document.getElementById('noTokensFoundOptions').textContent = t('noTokensFoundOptions');
+    document.getElementById('noTokensFoundMessage').textContent = t('noTokensFoundMessage');
+    document.getElementById('languageLabel').textContent = t('language') + ':';
+    
+    // Update form labels and helpers
+    document.getElementById('issuerLabel').textContent = t('issuer');
+    document.getElementById('issuer').placeholder = t('issuerPlaceholder');
+    document.getElementById('issuerHelperText').textContent = t('issuerHelperText');
+    document.getElementById('labelLabel').textContent = t('label');
+    document.getElementById('label').placeholder = t('labelPlaceholder');
+    document.getElementById('labelHelperText').textContent = t('labelHelperText');
+    document.getElementById('secretLabel').textContent = t('secretKey');
+    document.getElementById('secret').placeholder = t('secretKeyPlaceholder');
+    document.getElementById('secretHelperText').textContent = t('secretKeyHelperText');
+    
+    // Update QR code section
+    document.getElementById('scanQRCodeLabel').textContent = t('scanQRCode');
+    document.getElementById('chooseImageText').textContent = t('chooseImage');
+    document.getElementById('scanQRCodeHelper').textContent = t('scanQRCodeHelper');
+    
+    // Update button texts based on mode
+    const addTokenButton = document.getElementById('addTokenButton');
+    const cancelButton = document.getElementById('cancelButton');
+    if (tokenForm && tokenForm.dataset.editIndex !== undefined) {
+      addTokenButton.textContent = t('updateTokenButton');
+    } else {
+      addTokenButton.textContent = t('addTokenButton');
+    }
+    cancelButton.textContent = t('cancel');
+    
+    // Update language selector options
+    document.getElementById('autoOption').textContent = t('auto');
+    document.getElementById('englishOption').textContent = t('english');
+    document.getElementById('chineseOption').textContent = t('chinese');
+    
+    // Update modal title based on mode
+    const modalTitle = document.getElementById('addTokenModalTitle');
+    if (tokenForm && tokenForm.dataset.editIndex !== undefined) {
+      modalTitle.textContent = t('updateTokenButton');
+    } else {
+      modalTitle.textContent = t('addNewToken');
+    }
+  }
   
   // Initial load
   await loadTokens();
