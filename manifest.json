@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Simple OTP Manager",
-  "version": "1.0",
+  "version": "1.0.0",
   "description": "A simple OTP manager for generating and storing one-time passwords",
   "permissions": [
     "storage",
