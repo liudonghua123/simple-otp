@@ -301,6 +301,17 @@ body {
   color: var(--text-secondary);
 }
 
+.token-url {
+  font-size: 0.75rem;
+  color: var(--primary-color);
+  margin-top: 3px;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
 .token-actions {
   display: flex;
   gap: 8px;
@@ -532,7 +543,13 @@ body {
   text-align: center;
 }
 
-.copy-btn {
+.token-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.icon-btn {
   background: var(--light-bg);
   color: var(--text-secondary);
   border: 1px solid var(--border-color);
@@ -549,7 +566,7 @@ body {
   flex-shrink: 0;
 }
 
-.copy-btn:hover {
+.icon-btn:hover {
   background: var(--border-color);
   transform: scale(1.1);
 }

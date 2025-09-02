@@ -95,6 +95,19 @@
             <span class="helper-text" id="secretHelperText">The secret key provided by the service (Base32 format)</span>
           </div>
           
+          <!-- URL and Selector Fields -->
+          <div class="form-group">
+            <label for="url" id="urlLabel">Applicable URL (Optional)</label>
+            <input type="text" id="url" placeholder="e.g., https://example.com">
+            <span class="helper-text" id="urlHelperText">The URL where this token is applicable (e.g., https://example.com)</span>
+          </div>
+          
+          <div class="form-group">
+            <label for="selector" id="selectorLabel">OTP Input Selector (Optional)</label>
+            <input type="text" id="selector" placeholder="e.g., input#otp-code">
+            <span class="helper-text" id="selectorHelperText">CSS selector for the OTP input field (e.g., input#otp-code, #otp-input)</span>
+          </div>
+          
           <!-- QR Code Scanner Section -->
           <div class="form-group">
             <label id="scanQRCodeLabel">Scan QR Code</label>

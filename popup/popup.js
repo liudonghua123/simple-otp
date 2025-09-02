@@ -60,7 +60,10 @@ document.addEventListener('DOMContentLoaded', async function() {
       </div>
       <div class="token-content">
         <span class="otp-value">${otp}</span>
-        <button class="copy-btn icon-btn" data-otp="${otp}" title="${t('copyToClipboard')}">📋</button>
+        <div class="token-actions">
+          <button class="copy-btn icon-btn" data-otp="${otp}" title="${t('copyToClipboard')}">📋</button>
+          <button class="autofill-btn icon-btn" data-otp="${otp}" data-url="${token.url || ''}" data-selector="${token.selector || ''}" title="Auto-fill OTP">📥</button>
+        </div>
       </div>
       <div class="token-footer">
         <span class="issuer">${token.issuer}</span>
@@ -99,6 +102,63 @@ document.addEventListener('DOMContentLoaded', async function() {
           copyBtn.title = t('copyToClipboard');
         }, 2000);
       });
+    });
+    
+    // Add auto-fill functionality
+    const autofillBtn = card.querySelector('.autofill-btn');
+    autofillBtn.addEventListener('click', async () => {
+      const url = autofillBtn.dataset.url;
+      const selector = autofillBtn.dataset.selector;
+      
+      // Check if URL and selector are provided
+      if (!url || !selector) {
+        alert('URL and selector are not configured for this token.');
+        return;
+      }
+      
+      // Get current active tab
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      
+      // Check if we have a valid tab with URL
+      if (!tab || !tab.url) {
+        alert('Unable to get current page URL. Please make sure you are on a web page or proper permission configured in manifest.json.');
+        return;
+      }
+      
+      // Check if current tab URL matches the token URL
+      if (!tab.url.includes(url)) {
+        alert(`Current page does not match the configured URL. Expected: ${url}`);
+        return;
+      }
+      
+      // Execute script to fill the OTP
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: (selector, otp) => {
+            console.info(`auto fill otp for ${otp} using ${selector}`);
+            const element = document.querySelector(selector);
+            if (element) {
+              element.value = otp;
+              element.dispatchEvent(new Event('input', { bubbles: true }));
+              element.dispatchEvent(new Event('change', { bubbles: true }));
+              return true;
+            }
+            return false;
+          },
+          args: [selector, otp]
+        });
+        
+        // Show success feedback
+        const originalText = autofillBtn.textContent;
+        autofillBtn.textContent = '✓';
+        setTimeout(() => {
+          autofillBtn.textContent = originalText;
+        }, 2000);
+      } catch (error) {
+        console.error('Auto-fill error:', error);
+        alert('Failed to auto-fill OTP. Check console for details.');
+      }
     });
     
     return card;

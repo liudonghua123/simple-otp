@@ -4,7 +4,10 @@
   "version": "1.0",
   "description": "A simple OTP manager for generating and storing one-time passwords",
   "permissions": [
-    "storage"
+    "storage",
+    "scripting",
+    "activeTab",
+    "tabs"
   ],
   "action": {
     "default_popup": "popup/popup.html",

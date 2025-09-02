@@ -46,10 +46,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     tokens.forEach((token, index) => {
       const tokenElement = document.createElement('div');
       tokenElement.className = 'token-item';
+      const urlDisplay = token.url ? `<span class="token-url">${token.url}</span>` : '';
       tokenElement.innerHTML = `
         <div class="token-info">
           <strong>${token.issuer}</strong>
           <span>${token.label}</span>
+          ${urlDisplay}
         </div>
         <div class="token-actions">
           <button class="btn-secondary edit-btn" data-index="${index}">${t('edit')}</button>
@@ -77,11 +79,11 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
   
   // Add or update a token
-  async function saveToken(issuer, label, secret, index = -1) {
+  async function saveToken(issuer, label, secret, url = '', selector = '', index = -1) {
     const result = await chrome.storage.local.get(['otpTokens']);
     let tokens = result.otpTokens || [];
     
-    const newToken = { issuer, label, secret };
+    const newToken = { issuer, label, secret, url, selector };
     
     if (index >= 0 && index < tokens.length) {
       // Update existing token
@@ -115,6 +117,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('issuer').value = token.issuer;
         document.getElementById('label').value = token.label;
         document.getElementById('secret').value = token.secret;
+        document.getElementById('url').value = token.url || '';
+        document.getElementById('selector').value = token.selector || '';
         
         // Show modal
         addTokenModal.style.display = 'block';
@@ -159,6 +163,13 @@ document.addEventListener('DOMContentLoaded', async function() {
           throw new Error(t('invalidFileFormat'));
         }
         
+        // Validate each token
+        for (const token of tokens) {
+          if (!token.issuer || !token.label || !token.secret) {
+            throw new Error(t('invalidTokenFormat'));
+          }
+        }
+        
         // Get existing tokens
         const result = await chrome.storage.local.get(['otpTokens']);
         let existingTokens = result.otpTokens || [];
@@ -174,6 +185,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.warn('Skipping invalid token:', newToken);
             return;
           }
+          
+          // Add default values for new fields if not present
+          newToken.url = newToken.url || '';
+          newToken.selector = newToken.selector || '';
           
           // Check if token with same issuer and label already exists
           const existingIndex = existingTokens.findIndex(
@@ -235,15 +250,17 @@ ${updatedCount} tokens updated`);
     const issuer = document.getElementById('issuer').value;
     const label = document.getElementById('label').value;
     const secret = document.getElementById('secret').value;
+    const url = document.getElementById('url').value;
+    const selector = document.getElementById('selector').value;
     
     const editIndex = tokenForm.dataset.editIndex;
     
     if (editIndex !== undefined) {
       // Update existing token
-      await saveToken(issuer, label, secret, parseInt(editIndex));
+      await saveToken(issuer, label, secret, url, selector, parseInt(editIndex));
     } else {
       // Add new token
-      await saveToken(issuer, label, secret);
+      await saveToken(issuer, label, secret, url, selector);
     }
     
     // Hide modal
@@ -401,6 +418,12 @@ ${updatedCount} tokens updated`);
     document.getElementById('secretLabel').textContent = t('secretKey');
     document.getElementById('secret').placeholder = t('secretKeyPlaceholder');
     document.getElementById('secretHelperText').textContent = t('secretKeyHelperText');
+    document.getElementById('urlLabel').textContent = t('urlLabel') || 'Applicable URL (Optional)';
+    document.getElementById('url').placeholder = t('urlPlaceholder') || 'e.g., https://example.com';
+    document.getElementById('urlHelperText').textContent = t('urlHelperText') || 'The URL where this token is applicable (e.g., https://example.com)';
+    document.getElementById('selectorLabel').textContent = t('selectorLabel') || 'OTP Input Selector (Optional)';
+    document.getElementById('selector').placeholder = t('selectorPlaceholder') || 'e.g., input#otp-code';
+    document.getElementById('selectorHelperText').textContent = t('selectorHelperText') || 'CSS selector for the OTP input field (e.g., input#otp-code, #otp-input)';
     
     // Update QR code section
     document.getElementById('scanQRCodeLabel').textContent = t('scanQRCode');
