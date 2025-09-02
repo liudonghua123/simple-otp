@@ -28,6 +28,14 @@ A browser extension for generating and managing OTP (One-Time Password) tokens. 
      2. Click "This Firefox"
      3. Click "Load Temporary Add-on" and select the `manifest.json` file in the `dist` folder
 
+## Snapshots
+
+![popup example](./resources/popup_example.png)
+
+![options](./resources/options.png)
+
+![add new token](./resources/add_new_token.png)
+
 ## Development
 
 - Run `npm run dev` to watch for changes and automatically rebuild
