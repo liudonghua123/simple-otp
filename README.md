@@ -34,6 +34,20 @@ A browser extension for generating and managing OTP (One-Time Password) tokens. 
 - Modify files in the root directory (not in `dist`)
 - The `dist` folder is automatically generated and should not be modified directly
 
+## GitHub Actions
+
+This repository includes GitHub Actions for automated workflows:
+
+### Release Workflow
+- Automatically creates a release when a new tag (v*) is pushed
+- Builds the extension and packages it as a ZIP file
+- Creates a GitHub release with the packaged extension
+
+### Version Bump Workflow
+- Manually triggered workflow to bump the version
+- Updates both `package.json` and `manifest.json`
+- Creates a pull request with the version changes
+
 ## Usage
 
 1. Click the extension icon to open the popup

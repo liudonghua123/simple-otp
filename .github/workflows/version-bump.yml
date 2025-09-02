@@ -1,0 +1,49 @@
+name: Version Bump
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version type (major, minor, patch)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Bump version in package.json
+        id: bump_package
+        run: |
+          npm version ${{ github.event.inputs.version }} --no-git-tag-version
+          echo "new_version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Bump version in manifest.json
+        run: |
+          VERSION="${{ steps.bump_package.outputs.new_version }}"
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" manifest.json
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'Bump version to ${{ steps.bump_package.outputs.new_version }}'
+          title: 'Bump version to ${{ steps.bump_package.outputs.new_version }}'
+          body: 'This PR bumps the version to ${{ steps.bump_package.outputs.new_version }}'
+          branch: version-bump-${{ steps.bump_package.outputs.new_version }}
+          delete-branch: true
