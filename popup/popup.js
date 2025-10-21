@@ -59,33 +59,30 @@ document.addEventListener('DOMContentLoaded', async function() {
         <span class="token-issuer">${token.issuer}</span>
       </div>
       <div class="token-content">
-        <span class="otp-value">${otp}</span>
-        <div class="token-actions">
-          <button class="copy-btn icon-btn" data-otp="${otp}" title="${t('copyToClipboard')}">📋</button>
-          <button class="autofill-btn icon-btn" data-otp="${otp}" data-url="${token.url || ''}" data-selector="${token.selector || ''}" title="Auto-fill OTP">📥</button>
-        </div>
-      </div>
-      <div class="token-footer">
-        <span class="issuer">${token.issuer}</span>
         <div class="progress-container" title="${t('tokenExpiresIn')} ${30 - (new Date().getSeconds() % 30)} ${t('seconds')}">
           <svg class="progress-ring" width="30" height="30">
-            <circle class="progress-ring-circle" 
-                    stroke="#e9ecef" 
-                    stroke-width="3" 
-                    fill="transparent" 
-                    r="12" 
-                    cx="15" 
+            <circle class="progress-ring-circle"
+                    stroke="#e9ecef"
+                    stroke-width="3"
+                    fill="transparent"
+                    r="12"
+                    cx="15"
                     cy="15"/>
-            <circle class="progress-ring-circle progress" 
-                    stroke="#4361ee" 
-                    stroke-width="3" 
-                    fill="transparent" 
-                    r="12" 
-                    cx="15" 
+            <circle class="progress-ring-circle progress"
+                    stroke="#4361ee"
+                    stroke-width="3"
+                    fill="transparent"
+                    r="12"
+                    cx="15"
                     cy="15"
                     stroke-dasharray="75.4 75.4"
                     stroke-dashoffset="0"/>
           </svg>
+        </div>
+        <span class="otp-value">${otp}</span>
+        <div class="token-actions">
+          <button class="copy-btn icon-btn" data-otp="${otp}" title="${t('copyToClipboard')}">📋</button>
+          <button class="autofill-btn icon-btn" data-otp="${otp}" data-url="${token.url || ''}" data-selector="${token.selector || ''}" title="Auto-fill OTP">📥</button>
         </div>
       </div>
     `;
