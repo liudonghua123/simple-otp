@@ -82,9 +82,9 @@ document.addEventListener('DOMContentLoaded', async function() {
   async function saveToken(issuer, label, secret, url = '', selector = '', index = -1) {
     const result = await chrome.storage.local.get(['otpTokens']);
     let tokens = result.otpTokens || [];
-    
+
     const newToken = { issuer, label, secret, url, selector };
-    
+
     if (index >= 0 && index < tokens.length) {
       // Update existing token
       tokens[index] = newToken;
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       // Add new token
       tokens.push(newToken);
     }
-    
+
     await chrome.storage.local.set({ otpTokens: tokens });
   }
   
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('selector').value = token.selector || '';
         
         // Show modal
-        addTokenModal.style.display = 'block';
+        addTokenModal.style.display = 'flex';
         
         // Change form to update mode
         tokenForm.dataset.editIndex = index;
@@ -136,12 +136,12 @@ document.addEventListener('DOMContentLoaded', async function() {
   async function exportTokens() {
     const result = await chrome.storage.local.get(['otpTokens']);
     const tokens = result.otpTokens || [];
-    
+
     const dataStr = JSON.stringify(tokens, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
+
     const exportFileDefaultName = 'otp-tokens.json';
-    
+
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
@@ -185,11 +185,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.warn('Skipping invalid token:', newToken);
             return;
           }
-          
+
           // Add default values for new fields if not present
           newToken.url = newToken.url || '';
           newToken.selector = newToken.selector || '';
-          
+
           // Check if token with same issuer and label already exists
           const existingIndex = existingTokens.findIndex(
             t => t.issuer === newToken.issuer && t.label === newToken.label
@@ -227,7 +227,7 @@ ${updatedCount} tokens updated`);
   
   // Show modal
   function showModal() {
-    addTokenModal.style.display = 'block';
+    addTokenModal.style.display = 'flex';
     tokenForm.reset();
     delete tokenForm.dataset.editIndex;
     document.getElementById('addTokenButton').textContent = t('addTokenButton');
@@ -309,88 +309,148 @@ ${updatedCount} tokens updated`);
     await loadTokens();
   });
   
-  // QR Code image upload event listener
-  chooseImageButton.addEventListener('click', () => {
-    qrImageInput.click();
-  });
-  
-  // Handle QR image input change
-  qrImageInput.addEventListener('change', async function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
+  // Function to process QR code image
+  async function processQRImage(file) {
     try {
       // Create image element from file
       const img = new Image();
       const objectUrl = URL.createObjectURL(file);
-      
+
       img.onload = async function() {
         try {
           // Create canvas to process image
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
-          
+
           // Set canvas dimensions
           canvas.width = img.width;
           canvas.height = img.height;
-          
+
           // Draw image on canvas
           ctx.drawImage(img, 0, 0);
-          
+
           // Get image data from canvas
           const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          
+
           // Use jsQR to decode
           const code = jsQR(imageData.data, imageData.width, imageData.height);
-          
+
           if (code) {
             // Parse OTP information from QR content
             const otpInfo = parseOTPFromQRContent(code.data);
-            
+
             if (otpInfo) {
               // Fill form fields with parsed data
               document.getElementById('issuer').value = otpInfo.issuer;
               document.getElementById('label').value = otpInfo.label;
               document.getElementById('secret').value = otpInfo.secret;
-              
+
               // Show success message
               qrResultMessage.textContent = t('imageParsingSuccess');
+              qrResultMessage.className = 'helper-text';
               qrResultMessage.style.color = 'green';
             } else {
               // Show error message
               qrResultMessage.textContent = t('imageParsingError') + ': Invalid OTP format';
+              qrResultMessage.className = 'helper-text';
               qrResultMessage.style.color = 'red';
             }
           } else {
             // Show error message
             qrResultMessage.textContent = t('imageParsingError') + ': No QR code found';
+            qrResultMessage.className = 'helper-text';
             qrResultMessage.style.color = 'red';
           }
-          
+
           // Clean up object URL
           URL.revokeObjectURL(objectUrl);
         } catch (error) {
           console.error('Error processing QR code:', error);
           qrResultMessage.textContent = t('imageParsingError') + ': ' + error.message;
+          qrResultMessage.className = 'helper-text';
           qrResultMessage.style.color = 'red';
           URL.revokeObjectURL(objectUrl);
         }
       };
-      
+
       img.onerror = function() {
         qrResultMessage.textContent = t('imageParsingError') + ': Failed to load image';
+        qrResultMessage.className = 'helper-text';
         qrResultMessage.style.color = 'red';
         URL.revokeObjectURL(objectUrl);
       };
-      
+
       img.src = objectUrl;
     } catch (error) {
       console.error('Error reading QR code image:', error);
       qrResultMessage.textContent = t('imageParsingError') + ': ' + error.message;
+      qrResultMessage.className = 'helper-text';
       qrResultMessage.style.color = 'red';
     }
+  }
+
+  // QR Code image upload event listener
+  chooseImageButton.addEventListener('click', () => {
+    qrImageInput.click();
   });
-  
+
+  // Drag and drop functionality
+  const dragDropArea = document.getElementById('dragDropArea');
+
+  dragDropArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dragDropArea.classList.add('dragover');
+  });
+
+  dragDropArea.addEventListener('dragleave', () => {
+    dragDropArea.classList.remove('dragover');
+  });
+
+  dragDropArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dragDropArea.classList.remove('dragover');
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      // Check if the file is an image
+      if (file.type.startsWith('image/')) {
+        processQRImage(file);
+      } else {
+        qrResultMessage.textContent = t('imageParsingError') + ': Please drop an image file';
+        qrResultMessage.className = 'helper-text';
+        qrResultMessage.style.color = 'red';
+      }
+    }
+  });
+
+  // Click on drag area to select file
+  dragDropArea.addEventListener('click', () => {
+    qrImageInput.click();
+  });
+
+  // Handle QR image input change
+  qrImageInput.addEventListener('change', async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    processQRImage(file);
+  });
+
+  // Paste functionality
+  document.addEventListener('paste', async (e) => {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        e.preventDefault();
+        const file = items[i].getAsFile();
+        if (file) {
+          processQRImage(file);
+          break;
+        }
+      }
+    }
+  });
+
   // Update UI texts based on current language
   function updateUITexts() {
     // Update page titles and texts
@@ -407,7 +467,7 @@ ${updatedCount} tokens updated`);
     document.getElementById('noTokensFoundOptions').textContent = t('noTokensFoundOptions');
     document.getElementById('noTokensFoundMessage').textContent = t('noTokensFoundMessage');
     document.getElementById('languageLabel').textContent = t('language') + ':';
-    
+
     // Update form labels and helpers
     document.getElementById('issuerLabel').textContent = t('issuer');
     document.getElementById('issuer').placeholder = t('issuerPlaceholder');
@@ -424,12 +484,14 @@ ${updatedCount} tokens updated`);
     document.getElementById('selectorLabel').textContent = t('selectorLabel') || 'OTP Input Selector (Optional)';
     document.getElementById('selector').placeholder = t('selectorPlaceholder') || 'e.g., input#otp-code';
     document.getElementById('selectorHelperText').textContent = t('selectorHelperText') || 'CSS selector for the OTP input field (e.g., input#otp-code, #otp-input)';
-    
+
     // Update QR code section
     document.getElementById('scanQRCodeLabel').textContent = t('scanQRCode');
     document.getElementById('chooseImageText').textContent = t('chooseImage');
+    document.getElementById('dragDropText').textContent = t('dragDropText');
+    document.getElementById('pasteInstruction').textContent = t('pasteInstruction');
     document.getElementById('scanQRCodeHelper').textContent = t('scanQRCodeHelper');
-    
+
     // Update button texts based on mode
     const addTokenButton = document.getElementById('addTokenButton');
     const cancelButton = document.getElementById('cancelButton');

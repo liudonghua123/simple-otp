@@ -40,6 +40,8 @@
   "scanQRCode": "Scan QR Code",
   "scanQRCodeHelper": "Upload a QR code image to extract token information",
   "chooseImage": "Choose Image",
+  "dragDropText": "Drag & drop an image here, or click to select",
+  "pasteInstruction": "Or paste an image from clipboard (Ctrl+V)",
   "imageParsingError": "Error parsing QR code from image",
   "imageParsingSuccess": "Successfully parsed token information from QR code",
   "language": "Language",

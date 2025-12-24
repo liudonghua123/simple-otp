@@ -40,6 +40,8 @@
   "scanQRCode": "扫描二维码",
   "scanQRCodeHelper": "上传二维码图片以提取令牌信息",
   "chooseImage": "选择图片",
+  "dragDropText": "拖拽图片到此处，或点击选择",
+  "pasteInstruction": "或从剪贴板粘贴图片 (Ctrl+V)",
   "imageParsingError": "从图片解析二维码时出错",
   "imageParsingSuccess": "成功从二维码解析令牌信息",
   "language": "语言",

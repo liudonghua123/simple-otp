@@ -72,9 +72,25 @@ function parseOTPFromQRContent(content) {
     const secret = url.searchParams.get('secret');
     
     if (secret) {
+      // Decode the label and issuer to handle URI-encoded values from QR codes
+      let decodedLabel = label || 'Unknown';
+      let decodedIssuer = issuer || 'Unknown';
+
+      try {
+        decodedLabel = decodeURIComponent(label || 'Unknown');
+      } catch (e) {
+        // If decoding fails, use original value
+      }
+
+      try {
+        decodedIssuer = decodeURIComponent(issuer || 'Unknown');
+      } catch (e) {
+        // If decoding fails, use original value
+      }
+
       return {
-        issuer: issuer || 'Unknown',
-        label: label || 'Unknown',
+        issuer: decodedIssuer,
+        label: decodedLabel,
         secret: secret
       };
     }

@@ -351,11 +351,12 @@ body {
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(3px);
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-content {
   background-color: var(--card-bg);
-  margin: 5% auto;
   padding: 0;
   border-radius: var(--border-radius);
   width: 90%;
@@ -587,6 +588,45 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 70%;
+}
+
+/* QR Code drag and drop area */
+.qr-upload-container {
+  position: relative;
+}
+
+.drag-drop-area {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  background-color: #fafafa;
+  margin: 10px 0;
+}
+
+.drag-drop-area:hover {
+  border-color: var(--primary-color);
+  background-color: rgba(67, 97, 238, 0.03);
+}
+
+.drag-drop-area.dragover {
+  border-color: var(--primary-color);
+  background-color: rgba(67, 97, 238, 0.1);
+  transform: scale(1.02);
+}
+
+.drag-drop-area p {
+  margin: 8px 0;
+  color: var(--text-secondary);
+}
+
+.drag-drop-area #pasteInstruction {
+  font-size: 0.85rem;
+  margin-top: 10px;
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 .progress-container {

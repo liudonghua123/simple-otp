@@ -113,10 +113,14 @@
             <label id="scanQRCodeLabel">Scan QR Code</label>
             <div class="qr-upload-container">
               <input type="file" id="qrImageInput" accept="image/*" style="display: none;">
-              <button type="button" id="chooseImageButton" class="btn-secondary">
-                <span id="chooseImageText">Choose Image</span>
-              </button>
-              <span id="qrResultMessage" class="helper-text" style="margin-left: 10px;"></span>
+              <div id="dragDropArea" class="drag-drop-area">
+                <p id="dragDropText">Drag & drop an image here, or click to select</p>
+                <button type="button" id="chooseImageButton" class="btn-secondary">
+                  <span id="chooseImageText">Choose Image</span>
+                </button>
+                <p id="pasteInstruction">Or paste an image from clipboard (Ctrl+V)</p>
+              </div>
+              <span id="qrResultMessage" class="helper-text"></span>
             </div>
             <span class="helper-text" id="scanQRCodeHelper">Upload a QR code image to extract token information</span>
           </div>
