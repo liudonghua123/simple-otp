@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', async function() {
   // Initialize i18n
   await initI18n();
-  
+
   // Get DOM elements
   const tokenForm = document.getElementById('tokenForm');
   const tokenList = document.getElementById('tokenList');
@@ -17,19 +17,19 @@ document.addEventListener('DOMContentLoaded', async function() {
   const chooseImageButton = document.getElementById('chooseImageButton');
   const qrImageInput = document.getElementById('qrImageInput');
   const qrResultMessage = document.getElementById('qrResultMessage');
-  
+
   // Set initial language selection
   const currentLang = getCurrentLanguage();
   languageSelector.value = currentLang === 'en-US' || currentLang === 'zh-CN' ? currentLang : 'auto';
-  
+
   // Update UI texts after elements are defined
   updateUITexts();
-  
+
   // Load and display tokens
   async function loadTokens() {
     const result = await chrome.storage.local.get(['otpTokens']);
     const tokens = result.otpTokens || [];
-    
+
     if (tokens.length === 0) {
       tokenList.innerHTML = `
         <div class="empty-state">
@@ -40,9 +40,9 @@ document.addEventListener('DOMContentLoaded', async function() {
       `;
       return;
     }
-    
+
     tokenList.innerHTML = '';
-    
+
     tokens.forEach((token, index) => {
       const tokenElement = document.createElement('div');
       tokenElement.className = 'token-item';
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       `;
       tokenList.appendChild(tokenElement);
     });
-    
+
     // Add event listeners for delete buttons
     document.querySelectorAll('.delete-btn').forEach(button => {
       button.addEventListener('click', async (e) => {
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         await deleteToken(index);
       });
     });
-    
+
     // Add event listeners for edit buttons
     document.querySelectorAll('.edit-btn').forEach(button => {
       button.addEventListener('click', (e) => {
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       });
     });
   }
-  
+
   // Add or update a token
   async function saveToken(issuer, label, secret, url = '', selector = '', index = -1) {
     const result = await chrome.storage.local.get(['otpTokens']);
@@ -95,19 +95,19 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     await chrome.storage.local.set({ otpTokens: tokens });
   }
-  
+
   // Delete a token
   async function deleteToken(index) {
     const result = await chrome.storage.local.get(['otpTokens']);
     const tokens = result.otpTokens || [];
-    
+
     if (index >= 0 && index < tokens.length) {
       tokens.splice(index, 1);
       await chrome.storage.local.set({ otpTokens: tokens });
       await loadTokens(); // Refresh the list
     }
   }
-  
+
   // Edit a token
   function editToken(index) {
     chrome.storage.local.get(['otpTokens'], function(result) {
@@ -119,10 +119,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('secret').value = token.secret;
         document.getElementById('url').value = token.url || '';
         document.getElementById('selector').value = token.selector || '';
-        
+
         // Show modal
         addTokenModal.style.display = 'flex';
-        
+
         // Change form to update mode
         tokenForm.dataset.editIndex = index;
         document.getElementById('addTokenButton').textContent = t('updateTokenButton');
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
     });
   }
-  
+
   // Export tokens to JSON file
   async function exportTokens() {
     const result = await chrome.storage.local.get(['otpTokens']);
@@ -147,37 +147,37 @@ document.addEventListener('DOMContentLoaded', async function() {
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
   }
-  
+
   // Import tokens from JSON file
   async function importTokens(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     const reader = new FileReader();
     reader.onload = async function(e) {
       try {
         const tokens = JSON.parse(e.target.result);
-        
+
         // Validate tokens structure
         if (!Array.isArray(tokens)) {
           throw new Error(t('invalidFileFormat'));
         }
-        
+
         // Validate each token
         for (const token of tokens) {
           if (!token.issuer || !token.label || !token.secret) {
             throw new Error(t('invalidTokenFormat'));
           }
         }
-        
+
         // Get existing tokens
         const result = await chrome.storage.local.get(['otpTokens']);
         let existingTokens = result.otpTokens || [];
-        
+
         // Count new and updated tokens
         let newCount = 0;
         let updatedCount = 0;
-        
+
         // Merge tokens: replace existing ones with same issuer/label, add new ones
         tokens.forEach(newToken => {
           // Validate token structure
@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', async function() {
           const existingIndex = existingTokens.findIndex(
             t => t.issuer === newToken.issuer && t.label === newToken.label
           );
-          
+
           if (existingIndex >= 0) {
             // Replace existing token
             existingTokens[existingIndex] = newToken;
@@ -205,13 +205,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             newCount++;
           }
         });
-        
+
         // Save merged tokens
         await chrome.storage.local.set({ otpTokens: existingTokens });
-        
+
         // Refresh the list
         await loadTokens();
-        
+
         // Show success message
         alert(`Successfully imported tokens!
 ${newCount} new tokens added
@@ -219,12 +219,15 @@ ${updatedCount} tokens updated`);
       } catch (error) {
         console.error('Error importing tokens:', error);
         alert('Error importing tokens: ' + error.message);
+      } finally {
+        // Reset the file input to allow importing the same file again
+        event.target.value = '';
       }
     };
-    
+
     reader.readAsText(file);
   }
-  
+
   // Show modal
   function showModal() {
     addTokenModal.style.display = 'flex';
@@ -237,24 +240,24 @@ ${updatedCount} tokens updated`);
     qrResultMessage.className = 'helper-text';
     updateUITexts(); // Update texts to reflect add mode
   }
-  
+
   // Hide modal
   function hideModal() {
     addTokenModal.style.display = 'none';
   }
-  
+
   // Handle form submission
   tokenForm.addEventListener('submit', async function(e) {
     e.preventDefault();
-    
+
     const issuer = document.getElementById('issuer').value;
     const label = document.getElementById('label').value;
     const secret = document.getElementById('secret').value;
     const url = document.getElementById('url').value;
     const selector = document.getElementById('selector').value;
-    
+
     const editIndex = tokenForm.dataset.editIndex;
-    
+
     if (editIndex !== undefined) {
       // Update existing token
       await saveToken(issuer, label, secret, url, selector, parseInt(editIndex));
@@ -262,39 +265,39 @@ ${updatedCount} tokens updated`);
       // Add new token
       await saveToken(issuer, label, secret, url, selector);
     }
-    
+
     // Hide modal
     hideModal();
-    
+
     // Refresh token list
     await loadTokens();
   });
-  
+
   // Export button event listener
   exportBtn.addEventListener('click', exportTokens);
-  
+
   // Import button event listener
   importBtn.addEventListener('click', () => {
     importFile.click();
   });
-  
+
   // Add token button event listener
   addTokenBtn.addEventListener('click', showModal);
-  
+
   // Modal close event listeners
   modalClose.addEventListener('click', hideModal);
   modalCancel.addEventListener('click', hideModal);
-  
+
   // Close modal when clicking outside of it
   window.addEventListener('click', (e) => {
     if (e.target === addTokenModal) {
       hideModal();
     }
   });
-  
+
   // Import file event listener
   importFile.addEventListener('change', importTokens);
-  
+
   // Language selector event listener
   languageSelector.addEventListener('change', async function() {
     const selectedLang = this.value;
@@ -308,7 +311,7 @@ ${updatedCount} tokens updated`);
     updateUITexts();
     await loadTokens();
   });
-  
+
   // Function to process QR code image
   async function processQRImage(file) {
     try {
@@ -464,8 +467,8 @@ ${updatedCount} tokens updated`);
     document.getElementById('importHelperText').textContent = t('importHelperText');
     document.getElementById('savedTokens').textContent = t('savedTokens');
     document.getElementById('savedTokensSubtitle').textContent = t('savedTokensSubtitle');
-    document.getElementById('noTokensFoundOptions').textContent = t('noTokensFoundOptions');
-    document.getElementById('noTokensFoundMessage').textContent = t('noTokensFoundMessage');
+    document.getElementById('noTokensFoundMessage') && (document.getElementById('noTokensFoundOptions').textContent = t('noTokensFoundOptions'));
+    document.getElementById('noTokensFoundMessage') && (document.getElementById('noTokensFoundMessage').textContent = t('noTokensFoundMessage'));
     document.getElementById('languageLabel').textContent = t('language') + ':';
 
     // Update form labels and helpers
@@ -501,12 +504,12 @@ ${updatedCount} tokens updated`);
       addTokenButton.textContent = t('addTokenButton');
     }
     cancelButton.textContent = t('cancel');
-    
+
     // Update language selector options
     document.getElementById('autoOption').textContent = t('auto');
     document.getElementById('englishOption').textContent = t('english');
     document.getElementById('chineseOption').textContent = t('chinese');
-    
+
     // Update modal title based on mode
     const modalTitle = document.getElementById('addTokenModalTitle');
     if (tokenForm && tokenForm.dataset.editIndex !== undefined) {
@@ -515,7 +518,7 @@ ${updatedCount} tokens updated`);
       modalTitle.textContent = t('addNewToken');
     }
   }
-  
+
   // Initial load
   await loadTokens();
 });
