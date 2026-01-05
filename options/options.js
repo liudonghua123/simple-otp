@@ -46,12 +46,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     tokens.forEach((token, index) => {
       const tokenElement = document.createElement('div');
       tokenElement.className = 'token-item';
+      tokenElement.draggable = true;
+      tokenElement.dataset.index = index;
       const urlDisplay = token.url ? `<span class="token-url">${token.url}</span>` : '';
       tokenElement.innerHTML = `
         <div class="token-info">
-          <strong>${token.issuer}</strong>
-          <span>${token.label}</span>
-          ${urlDisplay}
+          <div class="drag-handle">☰</div>
+          <div class="token-text">
+            <strong>${token.issuer}</strong>
+            <span>${token.label}</span>
+            ${urlDisplay}
+          </div>
         </div>
         <div class="token-actions">
           <button class="btn-secondary edit-btn" data-index="${index}">${t('edit')}</button>
@@ -64,20 +69,99 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Add event listeners for delete buttons
     document.querySelectorAll('.delete-btn').forEach(button => {
       button.addEventListener('click', async (e) => {
+        e.stopPropagation(); // Prevent drag events from firing
         const index = parseInt(e.target.dataset.index);
         await deleteToken(index);
       });
     });
-    
+
     // Add event listeners for edit buttons
     document.querySelectorAll('.edit-btn').forEach(button => {
       button.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent drag events from firing
         const index = parseInt(e.target.dataset.index);
         editToken(index);
       });
     });
+
+    // Add drag and drop event listeners for token reordering
+    document.querySelectorAll('.token-item').forEach((item, index) => {
+      item.addEventListener('dragstart', handleDragStart);
+      item.addEventListener('dragover', handleDragOver);
+      item.addEventListener('dragenter', handleDragEnter);
+      item.addEventListener('dragleave', handleDragLeave);
+      item.addEventListener('drop', handleDrop);
+      item.addEventListener('dragend', handleDragEnd);
+    });
   }
   
+  // Drag and drop handlers
+  let draggedItem = null;
+
+  function handleDragStart(e) {
+    draggedItem = this;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault(); // Necessary to allow drop
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+  }
+
+  function handleDragEnter(e) {
+    this.classList.add('drag-over');
+  }
+
+  function handleDragLeave(e) {
+    this.classList.remove('drag-over');
+  }
+
+  function handleDrop(e) {
+    e.stopPropagation(); // Prevent events from firing on parent elements
+
+    if (draggedItem !== this) {
+      // Get all token items
+      const tokenItems = Array.from(document.querySelectorAll('.token-item'));
+      const fromIndex = tokenItems.indexOf(draggedItem);
+      const toIndex = tokenItems.indexOf(this);
+
+      // Reorder tokens in storage
+      reorderTokens(fromIndex, toIndex);
+    }
+
+    this.classList.remove('drag-over');
+    return false;
+  }
+
+  function handleDragEnd(e) {
+    document.querySelectorAll('.token-item').forEach(item => {
+      item.classList.remove('drag-over');
+      item.classList.remove('dragging');
+    });
+    draggedItem = null;
+  }
+
+  // Reorder tokens in storage
+  async function reorderTokens(fromIndex, toIndex) {
+    const result = await chrome.storage.local.get(['otpTokens']);
+    const tokens = result.otpTokens || [];
+
+    if (fromIndex >= 0 && fromIndex < tokens.length && toIndex >= 0 && toIndex < tokens.length) {
+      // Remove the token from its current position and insert it at the new position
+      const [movedToken] = tokens.splice(fromIndex, 1);
+      tokens.splice(toIndex, 0, movedToken);
+
+      // Save the reordered tokens
+      await chrome.storage.local.set({ otpTokens: tokens });
+
+      // Refresh the token list to reflect the new order
+      await loadTokens();
+    }
+  }
+
   // Add or update a token
   async function saveToken(issuer, label, secret, url = '', selector = '', index = -1) {
     const result = await chrome.storage.local.get(['otpTokens']);

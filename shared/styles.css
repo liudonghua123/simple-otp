@@ -279,6 +279,16 @@ body {
   align-items: center;
   padding: 12px 0;
   border-bottom: 1px solid var(--border-color);
+  cursor: move;
+}
+
+.token-item.dragging {
+  opacity: 0.5;
+  background-color: rgba(67, 97, 238, 0.1);
+}
+
+.token-item.drag-over {
+  border-bottom: 2px dashed var(--primary-color);
 }
 
 .token-item:last-child {
@@ -287,7 +297,29 @@ body {
 
 .token-info {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  gap: 10px;
+}
+
+.token-info .token-text {
+  flex: 1;
+}
+
+.token-info .drag-handle {
+  cursor: move;
+  padding: 4px 6px;
+  margin-right: 5px;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  opacity: 0.6;
+  user-select: none;
+}
+
+.token-info .drag-handle:hover {
+  opacity: 1;
+  background-color: var(--light-bg);
+  border-radius: 4px;
 }
 
 .token-info strong {
